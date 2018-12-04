@@ -148,7 +148,6 @@ void addFile(string path, vector<string> &files, bool recursive,
 
     entry = readdir(dp);
     while (entry) {
-        // If the file is a naturally hidden file, don't add it
         if ((entry->d_name)[0] == '.') {
             entry = readdir(dp);
             continue;
@@ -294,6 +293,7 @@ void checkBrackets(string filename)
     int lineNumber = 1;
     bool singleQuote = false;
     bool doubleQuote = false;
+    // bool commentBlock = false;
 
     while (!getline(infile, currentLine).eof()) {
         for (size_t i = 0; i < currentLine.length(); i++) {
@@ -306,19 +306,18 @@ void checkBrackets(string filename)
                     break;
                 case '}':
                     if (!singleQuote && !doubleQuote) {
-                        try {
-                            topStack = s.top();
-                            if (topStack != '{') {
-                                throw runtime_error("Bracket mismatch");
-                            }
-                            s.pop();
-                        } catch (...) {
+                        if (s.empty() || s.top() != '{') {
                             ss << filename << ':' << lineNumber 
                                << " Bracket mismatch \'" << currentChar 
                                << "\'";
                             wordWrap(ss, cerr, 0);
+                        } else {
+                            s.pop();
                         }
                     }
+                    break;
+                case '\\': 
+                    i++;
                     break;
                 case '\'':
                     if (doubleQuote) {
