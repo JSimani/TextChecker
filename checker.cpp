@@ -2,6 +2,7 @@
 #include <fstream>
 #include <cstdlib>
 #include <vector>
+#include <stack>
 #include <dirent.h>
 #include "wordWrap.h"
 using namespace std;
@@ -14,6 +15,7 @@ void addFile(string path, vector<string> &files, bool recursive,
 void checkColumns(vector<string> files);
 void checkTabs(vector<string> files);
 void detab(string filename);
+void checkBrackets(string filename);
 
 int main(int argc, char **argv) 
 {
@@ -186,6 +188,7 @@ void checkTabs(vector<string> files)
     bool keepChecking;
     string response, filename, checkLine;
     ifstream infile;
+    stringstream ss;
 
     for (i = 0; i < files.size(); i++) {
         keepChecking = true;
@@ -201,9 +204,11 @@ void checkTabs(vector<string> files)
         while (keepChecking && !getline(infile, checkLine).eof()) {
             for (j = 0; j < checkLine.length(); j++) {
                 if (checkLine[j] == '\t') {
-                    cout << "Tabs found in " << filename
-                         << ":" << lineNumber << endl;
-                    cout << "Would you like to detab this file? ";
+                    ss << "Tabs found in " << filename
+                       << ":" << lineNumber;
+                    wordWrap(ss, cerr, 0);
+                    ss << "Would you like to detab this file? ";
+                    wordWrap(ss, cerr, 0);
                     cin >> response;
 
                     if (toupper(response[0]) == 'Y') {
@@ -228,12 +233,14 @@ void detab(string filename)
     string checkLine, currentLine;
     ifstream infile(filename.c_str());
     ofstream outfile;
+    stringstream ss;
 
-    cout << "How many spaces per tab? ";
+    ss << "How many spaces per tab? ";
+    wordWrap(ss, cerr, 0);
     while (!(cin >> numSpaces) || (numSpaces < 1)) {
         cin.clear();
         cin.ignore(256,'\n');
-        cout << "Invalid Input. Enter a positive integer. ";
+        cerr << "Invalid Input. Enter a positive integer. ";
     }    
 
     while (!getline(infile, checkLine).eof()) {
@@ -260,3 +267,13 @@ void detab(string filename)
     infile.close();
     outfile.close();
 }
+
+void checkBrackets(string filename)
+{
+    stack<char> s;
+    (void) filename;
+}
+
+
+
+
