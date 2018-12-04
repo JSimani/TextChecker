@@ -1,5 +1,6 @@
 # Prerequisites
 *.d
+.gitignore
 
 # Compiled Object files
 *.slo
@@ -33,3 +34,4 @@
 *.exe
 *.out
 *.app
+check
