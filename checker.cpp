@@ -46,18 +46,19 @@ int main(int argc, char **argv)
 void printHelp(char **argv)
 {
     stringstream ss;
-    ss << "usage: " << argv[0] << " [-AaCcRrTt] [file ...]";
+    ss << "usage: " << argv[0] << " [-abcrt] [--all] [--bracket] "
+       << "[--column] [--tab] [--recursive] [file ...]";
     wordWrap(ss, cerr, 0);
 
     ss << "-a, --all";
     wordWrap(ss, cerr, 4);
 
-    ss << "Include directory entries whose names "
-       << "begin with a dot (.) in check.";
+    ss << "Include directory entries whose names begin with a dot (.) in "
+       << "check.";
     wordWrap(ss, cerr, 8);
     cerr << endl;
 
-    ss << "-B, -b";
+    ss << "-b, --bracket";
     wordWrap(ss, cerr, 4);
 
     ss << "Check for bracket, quotation, and parenthesis mismatch";
@@ -67,7 +68,7 @@ void printHelp(char **argv)
     wordWrap(ss, cerr, 8);
     cerr << endl;
 
-    ss << "-C, -c";
+    ss << "-c, --column";
     wordWrap(ss, cerr, 4); 
 
     ss << "Check that the given file does not contain a line of text going "
@@ -75,15 +76,15 @@ void printHelp(char **argv)
     wordWrap(ss, cerr, 8);
     cerr << endl;
 
-    ss << "-R, -r";
+    ss << "-r, --recursive";
     wordWrap(ss, cerr, 4); 
 
-    ss << "\t\tRecursively check a directory and its subdirectories for "
+    ss << "Recursively check a directory and its subdirectories for "
        << "files to check.";
     wordWrap(ss, cerr, 8);
     cerr << endl;
 
-    ss << "-T, -t";
+    ss << "-t, --tab";
     wordWrap(ss, cerr, 4); 
 
     ss << "Check that the given file does not contain any tab characters, and "
@@ -107,7 +108,7 @@ vector<string> parseArguments(int argc, char **argv, bool &tabs,
     for (i = 1; i < argc; i++) {
         if (argv[i][0] == '-') {
             currentArg = argv[i];
-            if (currentArg.size() < 2) {
+            if (currentArg.size() == 1) {
                 ss << argv[0] << ": unregonized flag \'" << argv[i]
                    << "\'";
                 wordWrap(ss, cerr, 0);
@@ -116,18 +117,34 @@ vector<string> parseArguments(int argc, char **argv, bool &tabs,
             if (currentArg.substr(1, currentArg.length() - 1) == "-all") {
                 readHidden = true;
                 continue;
+            } else if (currentArg.substr(1, currentArg.length() - 1) == 
+                       "-bracket") {
+                brackets = true;
+                continue;
+            } else if (currentArg.substr(1, currentArg.length() - 1) == 
+                       "-column") {
+                columns = true;
+                continue;
+            } else if (currentArg.substr(1, currentArg.length() - 1) == 
+                       "-recursive") {
+                recursive = true;
+                continue;
+            } else if (currentArg.substr(1, currentArg.length() - 1) == 
+                       "-tab") {
+                tabs = true;
+                continue;
             }
             for (j = 1; j < strlen(argv[i]); j++) {
-                if (toupper(argv[i][j]) == 'A') {
+                if (argv[i][j] == 'a') {
                     readHidden = true;
-                } else if (toupper(argv[i][j]) == 'C') {
-                    columns = true;
-                } else if (toupper(argv[i][j]) == 'T') {
-                    tabs = true;
-                } else if (toupper(argv[i][j]) == 'R') {
-                    recursive = true;
-                } else if (toupper(argv[i][j]) == 'B') {
+                } else if (argv[i][j] == 'b') {
                     brackets = true;
+                } else if (argv[i][j] == 'c') {
+                    columns = true;
+                } else if (argv[i][j] == 'r') {
+                    recursive = true;
+                } else if (argv[i][j] == 't') {
+                    tabs = true;
                 } else {
                     ss << argv[0] << ": unregonized flag \'" << argv[i][j]
                        << "\'";
