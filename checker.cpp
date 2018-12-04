@@ -9,7 +9,7 @@ using namespace std;
 
 void printHelp(char **argv);
 vector<string> parseArguments(int argc, char **argv, bool &tabs, 
-                              bool &columns);
+                              bool &columns, bool &brackets);
 void addFile(string path, vector<string> &files, bool recursive, 
              bool readHidden);
 void checkColumns(vector<string> files);
@@ -19,8 +19,8 @@ void checkBrackets(string filename);
 
 int main(int argc, char **argv) 
 {
-    bool tabs = false, columns = false;
-    vector<string> files = parseArguments(argc, argv, tabs, columns);
+    bool tabs = false, columns = false, brackets = false;
+    vector<string> files = parseArguments(argc, argv, tabs, columns, brackets);
 
     if (files.empty()) {
         printHelp(argv);
@@ -32,6 +32,12 @@ int main(int argc, char **argv)
 
     if (columns) {
         checkColumns(files);
+    }
+
+    if (brackets) {
+        for (unsigned i = 0; i < files.size(); i++) {
+            checkBrackets(files[i]);
+        }
     }
 
     return 0;
@@ -48,6 +54,13 @@ void printHelp(char **argv)
 
     ss << "Include directory entries whose names "
        << "begin with a dot (.) in check.";
+    wordWrap(ss, cerr, 8);
+    cerr << endl;
+
+    ss << "-B, -b";
+    wordWrap(ss, cerr, 4);
+
+    ss << "Check for bracket, quotation, and parenthesis mismatch";
     wordWrap(ss, cerr, 8);
     cerr << endl;
 
@@ -78,7 +91,7 @@ void printHelp(char **argv)
 }
 
 vector<string> parseArguments(int argc, char **argv, bool &tabs, 
-                              bool &columns)
+                              bool &columns, bool &brackets)
 {
     vector<string> files;
     bool recursive = false, readHidden = false;
@@ -97,6 +110,8 @@ vector<string> parseArguments(int argc, char **argv, bool &tabs,
                     tabs = true;
                 } else if (toupper(argv[i][j]) == 'R') {
                     recursive = true;
+                } else if (toupper(argv[i][j]) == 'B') {
+                    brackets = true;
                 } else {
                     cerr << argv[0] << ": unregonized flag \'" << argv[i][j]
                          << "\'" << endl;
@@ -279,8 +294,6 @@ void checkBrackets(string filename)
     int lineNumber = 1;
     bool singleQuote = false;
     bool doubleQuote = false;
-    vector<string> lines;
-
 
     while (!getline(infile, currentLine).eof()) {
         for (size_t i = 0; i < currentLine.length(); i++) {
@@ -400,7 +413,6 @@ void checkBrackets(string filename)
         
         lineNumber++;
     }
-
         
     infile.close();
 }
