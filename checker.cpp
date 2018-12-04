@@ -271,7 +271,117 @@ void detab(string filename)
 void checkBrackets(string filename)
 {
     stack<char> s;
-    (void) filename;
+    ifstream infile(filename.c_str());
+    stringstream ss;
+    char currentChar;
+    char topStack;
+    string currentLine;
+    int lineNumber = 1;
+    bool singleQuote = false;
+    bool doubleQuote = false;
+    vector<string> lines;
+
+
+    while (!getline(infile, currentLine).eof()) {
+        for (size_t i = 0; i < currentLine.length(); i++) {
+            currentChar = currentLine[i];
+            switch (currentChar) {
+                case '{': 
+                    if (!singleQuote && !doubleQuote) {
+                        s.push(currentChar);
+                    }
+                    break;
+                case '}':
+                    if (!singleQuote && !doubleQuote) {
+                        try {
+                            topStack = s.top();
+                            if (topStack != '{') {
+                                throw runtime_error("Bracket mismatch");
+                            }
+                            s.pop();
+                        } catch (...) {
+                            ss << filename << ':' << lineNumber 
+                               << " Bracket mismatch \'" << currentChar 
+                               << "\'";
+                            wordWrap(ss, cerr, 0);
+                        }
+                    }
+                    break;
+                case '\'':
+                    if (doubleQuote) {
+                        break;
+                    } else if (singleQuote) {
+                        try {
+                            topStack = s.top();
+                            if (topStack != '\'') {
+                                throw runtime_error("Single quote mismatch");
+                            }
+                            s.pop();
+                            singleQuote = false;
+                        } catch (...) {
+                            ss << filename << ':' << lineNumber 
+                               << " Quotation mismatch \'" << currentChar 
+                               << "\'";
+                            wordWrap(ss, cerr, 0);
+                        }
+                    } else {
+                        s.push(currentChar);
+                        singleQuote = true;
+                    }
+                    break;
+                case '\"':
+                    if (singleQuote) {
+                        break;
+                    } else if (doubleQuote) {
+                        try {
+                            topStack = s.top();
+                            if (topStack != '\"') {
+                                throw runtime_error("Double quote mismatch");
+                            }
+                            s.pop();
+                            doubleQuote = false;
+                        } catch (...) {
+                            ss << filename << ':' << lineNumber 
+                               << " Quotation mismatch \'" << currentChar 
+                               << "\'";
+                            wordWrap(ss, cerr, 0);
+                        }
+                    } else {
+                        s.push(currentChar);
+                        doubleQuote = true;
+                    }
+                    break;
+                case '[':
+                    if (!singleQuote && !doubleQuote) {
+                        s.push(currentChar);
+                    }
+                    break;
+                case ']':
+                    if (!singleQuote && !doubleQuote) {
+                        try {
+                            topStack = s.top();
+                            if (topStack != '[') {
+                                throw runtime_error("Bracket mismatch");
+                            }
+                            s.pop();
+                        } catch (...) {
+                            ss << filename << ':' << lineNumber 
+                               << " Bracket mismatch \'" << currentChar 
+                               << "\'";
+                            wordWrap(ss, cerr, 0);
+                        }
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        
+        lineNumber++;
+    }
+
+        
+    infile.close();
 }
 
 
