@@ -372,6 +372,27 @@ void checkBrackets(string filename)
                         }
                     }
                     break;
+                case '(':
+                    if (!singleQuote && !doubleQuote) {
+                        s.push(currentChar);
+                    }
+                    break;
+                case ')':
+                    if (!singleQuote && !doubleQuote) {
+                        try {
+                            topStack = s.top();
+                            if (topStack != '(') {
+                                throw runtime_error("Parenthesis mismatch");
+                            }
+                            s.pop();
+                        } catch (...) {
+                            ss << filename << ':' << lineNumber 
+                               << " Parenthesis mismatch \'" << currentChar 
+                               << "\'";
+                            wordWrap(ss, cerr, 0);
+                        }
+                    }
+                    break;
                 default:
                     break;
             }
