@@ -293,19 +293,22 @@ void checkBrackets(string filename)
     int lineNumber = 1;
     bool singleQuote = false;
     bool doubleQuote = false;
-    // bool commentBlock = false;
+    bool commentBlock = false;
+    bool commentLine = false;
 
     while (!getline(infile, currentLine).eof()) {
         for (size_t i = 0; i < currentLine.length(); i++) {
             currentChar = currentLine[i];
             switch (currentChar) {
                 case '{': 
-                    if (!singleQuote && !doubleQuote) {
+                    if (!singleQuote && !doubleQuote && !commentBlock &&
+                        !commentLine) {
                         s.push(currentChar);
                     }
                     break;
                 case '}':
-                    if (!singleQuote && !doubleQuote) {
+                    if (!singleQuote && !doubleQuote && !commentBlock &&
+                        !commentLine) {
                         if (s.empty() || s.top() != '{') {
                             ss << filename << ':' << lineNumber 
                                << " Bracket mismatch \'" << currentChar 
@@ -317,10 +320,33 @@ void checkBrackets(string filename)
                     }
                     break;
                 case '\\': 
-                    i++;
+                    if (!commentBlock && !commentLine) {
+                        i++;
+                    }
+                    break;
+                case '/':
+                    if (i + 1 < currentLine.length()) {
+                        if (currentLine[i + 1] == '/') {
+                            commentLine = true;
+                        } else if (currentLine[i + 1] == '*') {
+                            commentBlock = true;
+                        }
+                    }
+                    break;
+                case '*':
+                    if (!singleQuote && !doubleQuote && 
+                        i + 1 < currentLine.length()) {
+                        if (currentLine[i + 1] == '/' && commentLine) {
+                            commentLine = false;
+                        } else if (currentLine[i + 1] == '/' && !commentLine) {
+                            ss << filename << ':' << lineNumber 
+                               << " Comment mismatch '*/'";
+                            wordWrap(ss, cerr, 0);
+                        } 
+                    }
                     break;
                 case '\'':
-                    if (doubleQuote) {
+                    if (doubleQuote || commentBlock || commentLine) {
                         break;
                     } else if (singleQuote) {
                         try {
@@ -342,7 +368,7 @@ void checkBrackets(string filename)
                     }
                     break;
                 case '\"':
-                    if (singleQuote) {
+                    if (singleQuote || commentBlock || commentLine) {
                         break;
                     } else if (doubleQuote) {
                         try {
@@ -364,44 +390,40 @@ void checkBrackets(string filename)
                     }
                     break;
                 case '[':
-                    if (!singleQuote && !doubleQuote) {
+                    if (!singleQuote && !doubleQuote && !commentBlock &&
+                        !commentLine) {
                         s.push(currentChar);
                     }
                     break;
                 case ']':
-                    if (!singleQuote && !doubleQuote) {
-                        try {
-                            topStack = s.top();
-                            if (topStack != '[') {
-                                throw runtime_error("Bracket mismatch");
-                            }
-                            s.pop();
-                        } catch (...) {
+                    if (!singleQuote && !doubleQuote && !commentBlock && 
+                        !commentLine) {
+                        if (s.empty() || s.top() != '[') {
                             ss << filename << ':' << lineNumber 
                                << " Bracket mismatch \'" << currentChar 
                                << "\'";
                             wordWrap(ss, cerr, 0);
+                        } else {
+                            s.pop();
                         }
                     }
                     break;
                 case '(':
-                    if (!singleQuote && !doubleQuote) {
+                    if (!singleQuote && !doubleQuote && !commentBlock &&
+                        !commentLine) {
                         s.push(currentChar);
                     }
                     break;
                 case ')':
-                    if (!singleQuote && !doubleQuote) {
-                        try {
-                            topStack = s.top();
-                            if (topStack != '(') {
-                                throw runtime_error("Parenthesis mismatch");
-                            }
-                            s.pop();
-                        } catch (...) {
+                    if (!singleQuote && !doubleQuote && !commentBlock && 
+                        !commentLine) {
+                        if (s.empty() || s.top() != '(') {
                             ss << filename << ':' << lineNumber 
-                               << " Parenthesis mismatch \'" << currentChar 
+                               << " Bracket mismatch \'" << currentChar 
                                << "\'";
                             wordWrap(ss, cerr, 0);
+                        } else {
+                            s.pop();
                         }
                     }
                     break;
@@ -409,7 +431,7 @@ void checkBrackets(string filename)
                     break;
             }
         }
-        
+        commentLine = false;
         lineNumber++;
     }
         
