@@ -49,7 +49,7 @@ void printHelp(char **argv)
     ss << "usage: " << argv[0] << " [-AaCcRrTt] [file ...]";
     wordWrap(ss, cerr, 0);
 
-    ss << "-A, -a";
+    ss << "-a, --all";
     wordWrap(ss, cerr, 4);
 
     ss << "Include directory entries whose names "
@@ -61,6 +61,9 @@ void printHelp(char **argv)
     wordWrap(ss, cerr, 4);
 
     ss << "Check for bracket, quotation, and parenthesis mismatch";
+    wordWrap(ss, cerr, 8);
+    ss << "NOTE: This feature is only fully functional in C++ files, as it "
+       << "ignores characters within C++ styled comments";
     wordWrap(ss, cerr, 8);
     cerr << endl;
 
@@ -98,9 +101,22 @@ vector<string> parseArguments(int argc, char **argv, bool &tabs,
     int i;
     unsigned j;
     string path;
+    string currentArg;
+    stringstream ss;
 
     for (i = 1; i < argc; i++) {
         if (argv[i][0] == '-') {
+            currentArg = argv[i];
+            if (currentArg.size() < 2) {
+                ss << argv[0] << ": unregonized flag \'" << argv[i]
+                   << "\'";
+                wordWrap(ss, cerr, 0);
+                printHelp(argv);
+            }
+            if (currentArg.substr(1, currentArg.length() - 1) == "-all") {
+                readHidden = true;
+                continue;
+            }
             for (j = 1; j < strlen(argv[i]); j++) {
                 if (toupper(argv[i][j]) == 'A') {
                     readHidden = true;
@@ -113,8 +129,9 @@ vector<string> parseArguments(int argc, char **argv, bool &tabs,
                 } else if (toupper(argv[i][j]) == 'B') {
                     brackets = true;
                 } else {
-                    cerr << argv[0] << ": unregonized flag \'" << argv[i][j]
-                         << "\'" << endl;
+                    ss << argv[0] << ": unregonized flag \'" << argv[i][j]
+                       << "\'";
+                    wordWrap(ss, cerr, 0);
                     printHelp(argv);
                 }
             }
@@ -134,6 +151,7 @@ void addFile(string path, vector<string> &files, bool recursive,
     struct dirent *entry;
     DIR *dp = opendir(path.c_str());
     string newPath;
+    string currentEntry;
 
     if (!dp) {
         files.push_back(path);
@@ -148,12 +166,17 @@ void addFile(string path, vector<string> &files, bool recursive,
 
     entry = readdir(dp);
     while (entry) {
-        if ((entry->d_name)[0] == '.') {
+        currentEntry = entry->d_name;
+        
+        if (currentEntry == "." || currentEntry == "..") {
+            entry = readdir(dp);
+            continue;
+        } else if (currentEntry[0] == '.' && !readHidden) {
             entry = readdir(dp);
             continue;
         }
 
-        newPath = path + '/' + entry->d_name;
+        newPath = path + '/' + currentEntry;
         addFile(newPath, files, recursive, readHidden);
         entry = readdir(dp);
     }
