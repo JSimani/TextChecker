@@ -101,7 +101,7 @@ vector<string> parseArguments(int argc, char **argv, bool &tabs,
     bool recursive = false, readHidden = false;
     int i;
     unsigned j;
-    string path;
+    vector<string> paths;
     string currentArg;
     stringstream ss;
 
@@ -155,8 +155,11 @@ vector<string> parseArguments(int argc, char **argv, bool &tabs,
             continue;
         } 
 
-        path = argv[i];
-        addFile(path, files, recursive, readHidden);
+        paths.push_back(argv[i]);
+    }
+
+    for (i = 0; (size_t)i < paths.size(); i++) {
+        addFile(paths[i], files, recursive, readHidden);
     }
 
     return files;
