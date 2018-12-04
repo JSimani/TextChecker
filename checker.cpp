@@ -7,9 +7,16 @@
 #include "wordWrap.h"
 using namespace std;
 
+struct Flags {
+    bool tabs;
+    bool columns;
+    bool brackets;
+    bool readHidden;
+    bool recursive;
+};
+
 void printHelp(char **argv);
-vector<string> parseArguments(int argc, char **argv, bool &tabs, 
-                              bool &columns, bool &brackets);
+vector<string> parseArguments(int argc, char **argv, Flags &cFlags);
 void addFile(string path, vector<string> &files, bool recursive, 
              bool readHidden);
 void checkColumns(vector<string> files);
@@ -19,23 +26,24 @@ void checkBrackets(string filename);
 
 int main(int argc, char **argv) 
 {
-    bool tabs = false, columns = false, brackets = false;
-    vector<string> files = parseArguments(argc, argv, tabs, columns, brackets);
+    unsigned i;
+    Flags cFlags = {false, false, false, false, false};
+    vector<string> files = parseArguments(argc, argv, cFlags);
 
     if (files.empty()) {
         printHelp(argv);
     }
 
-    if (tabs){
+    if (cFlags.tabs){
         checkTabs(files);
     }
 
-    if (columns) {
+    if (cFlags.columns) {
         checkColumns(files);
     }
 
-    if (brackets) {
-        for (unsigned i = 0; i < files.size(); i++) {
+    if (cFlags.brackets) {
+        for (i = 0; i < files.size(); i++) {
             checkBrackets(files[i]);
         }
     }
@@ -94,11 +102,9 @@ void printHelp(char **argv)
     exit(1);
 }
 
-vector<string> parseArguments(int argc, char **argv, bool &tabs, 
-                              bool &columns, bool &brackets)
+vector<string> parseArguments(int argc, char **argv, Flags &cFlags)
 {
     vector<string> files;
-    bool recursive = false, readHidden = false;
     int i;
     unsigned j;
     vector<string> paths;
@@ -115,36 +121,36 @@ vector<string> parseArguments(int argc, char **argv, bool &tabs,
                 printHelp(argv);
             }
             if (currentArg.substr(1, currentArg.length() - 1) == "-all") {
-                readHidden = true;
+                cFlags.readHidden = true;
                 continue;
             } else if (currentArg.substr(1, currentArg.length() - 1) == 
                        "-bracket") {
-                brackets = true;
+                cFlags.brackets = true;
                 continue;
             } else if (currentArg.substr(1, currentArg.length() - 1) == 
                        "-column") {
-                columns = true;
+                cFlags.columns = true;
                 continue;
             } else if (currentArg.substr(1, currentArg.length() - 1) == 
                        "-recursive") {
-                recursive = true;
+                cFlags.recursive = true;
                 continue;
             } else if (currentArg.substr(1, currentArg.length() - 1) == 
                        "-tab") {
-                tabs = true;
+                cFlags.tabs = true;
                 continue;
             }
             for (j = 1; j < strlen(argv[i]); j++) {
                 if (argv[i][j] == 'a') {
-                    readHidden = true;
+                    cFlags.readHidden = true;
                 } else if (argv[i][j] == 'b') {
-                    brackets = true;
+                    cFlags.brackets = true;
                 } else if (argv[i][j] == 'c') {
-                    columns = true;
+                    cFlags.columns = true;
                 } else if (argv[i][j] == 'r') {
-                    recursive = true;
+                    cFlags.recursive = true;
                 } else if (argv[i][j] == 't') {
-                    tabs = true;
+                    cFlags.tabs = true;
                 } else {
                     ss << argv[0] << ": unregonized flag \'" << argv[i][j]
                        << "\'";
@@ -159,7 +165,7 @@ vector<string> parseArguments(int argc, char **argv, bool &tabs,
     }
 
     for (i = 0; (size_t)i < paths.size(); i++) {
-        addFile(paths[i], files, recursive, readHidden);
+        addFile(paths[i], files, cFlags.recursive, cFlags.readHidden);
     }
 
     return files;
